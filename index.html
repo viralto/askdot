@@ -218,6 +218,29 @@
     0%, 100% { opacity: 0.3; transform: scale(0.8); }
     50% { opacity: 1; transform: scale(1); }
   }
+  @keyframes translatingPulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+  }
+  .translating-banner {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: rgba(45,140,240,0.1);
+    border-bottom: 1px solid rgba(45,140,240,0.2);
+    padding: 8px 16px;
+    font-size: 12px;
+    color: #2d8cf0;
+    text-align: center;
+    font-family: 'SF Mono', Menlo, monospace;
+    animation: translatingPulse 1.5s ease-in-out infinite;
+    display: none;
+  }
+  body.translating .translating-banner { display: block; }
+  body.translating .msg-bubble { opacity: 0.4; transition: opacity 0.3s; }
+  body.translating .lang-flag { cursor: not-allowed; opacity: 0.4; }
+  body.translating .lang-flag.active { opacity: 1; }
+  .msg-bubble { transition: opacity 0.3s; }
   @media (max-width: 480px) {
     .msg-bubble { max-width: 90%; }
     .suggestion-btn { font-size: 12px; padding: 6px 10px; }
@@ -246,6 +269,7 @@
     <div class="header-status"><span class="status-dot"></span>Online</div>
   </div>
 </div>
+<div class="translating-banner" id="translatingBanner">Translating<span id="translatingDots">...</span></div>
 <div class="chat-area" id="chatArea">
   <div class="welcome" id="welcome">
     <div class="welcome-logo">dot</div>
@@ -285,6 +309,9 @@ const LANGS = {
     other: "Something else? Just type below...",
     placeholder: "Ask about EasyTac...",
     footer: "Powered by Dot Origin. If Dot gets something wrong, call us on +44 (0) 1428 685 861.",
+    confirmSwitch: "Switching language will start a fresh conversation. Continue?",
+    translating: "Translating",
+    langName: "English",
     prefix: ""
   },
   de: {
@@ -299,6 +326,8 @@ const LANGS = {
     other: "Etwas anderes? Einfach unten eintippen...",
     placeholder: "Fragen zu EasyTac...",
     footer: "Bereitgestellt von Dot Origin. Falls Dot einen Fehler macht, rufen Sie uns an: +44 (0) 1428 685 861.",
+    translating: "Übersetzen",
+    langName: "German",
     prefix: "[The user has selected German. Please respond in German.]\n\n"
   },
   fr: {
@@ -313,6 +342,8 @@ const LANGS = {
     other: "Autre chose ? Tapez ci-dessous...",
     placeholder: "Posez votre question sur EasyTac...",
     footer: "Propulsé par Dot Origin. Si Dot se trompe, appelez-nous au +44 (0) 1428 685 861.",
+    translating: "Traduction",
+    langName: "French",
     prefix: "[The user has selected French. Please respond in French.]\n\n"
   },
   es: {
@@ -327,6 +358,8 @@ const LANGS = {
     other: "¿Algo más? Escribe abajo...",
     placeholder: "Pregunta sobre EasyTac...",
     footer: "Desarrollado por Dot Origin. Si Dot comete un error, llámanos al +44 (0) 1428 685 861.",
+    translating: "Traduciendo",
+    langName: "Spanish",
     prefix: "[The user has selected Spanish. Please respond in Spanish.]\n\n"
   },
   it: {
@@ -341,6 +374,8 @@ const LANGS = {
     other: "Qualcos'altro? Scrivi qui sotto...",
     placeholder: "Chiedi informazioni su EasyTac...",
     footer: "Realizzato da Dot Origin. Se Dot sbaglia, chiamateci al +44 (0) 1428 685 861.",
+    translating: "Traduzione",
+    langName: "Italian",
     prefix: "[The user has selected Italian. Please respond in Italian.]\n\n"
   },
   nl: {
@@ -355,6 +390,8 @@ const LANGS = {
     other: "Iets anders? Typ hieronder...",
     placeholder: "Vraag over EasyTac...",
     footer: "Mogelijk gemaakt door Dot Origin. Als Dot een fout maakt, bel ons op +44 (0) 1428 685 861.",
+    translating: "Vertalen",
+    langName: "Dutch",
     prefix: "[The user has selected Dutch. Please respond in Dutch.]\n\n"
   },
   da: {
@@ -369,6 +406,8 @@ const LANGS = {
     other: "Noget andet? Skriv nedenfor...",
     placeholder: "Spørg om EasyTac...",
     footer: "Drevet af Dot Origin. Hvis Dot laver en fejl, ring til os på +44 (0) 1428 685 861.",
+    translating: "Oversætter",
+    langName: "Danish",
     prefix: "[The user has selected Danish. Please respond in Danish.]\n\n"
   },
   sv: {
@@ -383,23 +422,112 @@ const LANGS = {
     other: "Något annat? Skriv nedan...",
     placeholder: "Fråga om EasyTac...",
     footer: "Drivs av Dot Origin. Om Dot gör ett misstag, ring oss på +44 (0) 1428 685 861.",
+    translating: "Översätter",
+    langName: "Swedish",
     prefix: "[The user has selected Swedish. Please respond in Swedish.]\n\n"
   }
 };
 
 let currentLang = 'en';
-let conversationHistory = [];
+let displayMessages = []; // [{id, role, originalContent, originalLang, translations: {lang: text}}]
 let isLoading = false;
+let isTranslating = false;
+let messageCounter = 0;
 
-function setLang(lang) {
-  currentLang = lang;
+async function setLang(lang) {
+  if (lang === currentLang || isTranslating) return;
   const l = LANGS[lang];
 
-  // Update active flag
-  document.querySelectorAll('.lang-flag').forEach(f => f.classList.remove('active'));
-  document.querySelector('[onclick="setLang(\'' + lang + '\')"]').classList.add('active');
+  // If conversation hasn't started, just switch UI
+  if (displayMessages.length === 0) {
+    currentLang = lang;
+    updateActiveFlag(lang);
+    updateWelcomeAndChrome(lang);
+    return;
+  }
 
-  // Update welcome screen if visible
+  // Conversation in progress: translate existing messages
+  isTranslating = true;
+  document.body.classList.add('translating');
+  document.getElementById('translatingBanner').textContent = l.translating + '...';
+  // Pre-set active flag to give immediate feedback
+  updateActiveFlag(lang);
+
+  // Find messages that don't yet have a translation in target lang
+  const toTranslate = [];
+  const toTranslateIndexes = [];
+  displayMessages.forEach((msg, i) => {
+    if (!msg.translations[lang]) {
+      // Use any existing translation as source (prefer original language)
+      const sourceText = msg.translations[msg.originalLang] || msg.originalContent;
+      toTranslate.push({ role: msg.role, content: sourceText });
+      toTranslateIndexes.push(i);
+    }
+  });
+
+  if (toTranslate.length > 0) {
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mode: 'translate',
+          targetLanguage: l.langName,
+          messages: toTranslate
+        })
+      });
+      const data = await res.json();
+      let text = data.content?.[0]?.text || '[]';
+      // Strip potential markdown fences defensively
+      text = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '').trim();
+      const translated = JSON.parse(text);
+
+      if (!Array.isArray(translated) || translated.length !== toTranslate.length) {
+        throw new Error('Translation returned wrong shape');
+      }
+
+      // Cache translations on their messages
+      translated.forEach((t, i) => {
+        const msgIndex = toTranslateIndexes[i];
+        displayMessages[msgIndex].translations[lang] = t;
+      });
+    } catch (err) {
+      console.error('Translation failed:', err);
+      document.body.classList.remove('translating');
+      isTranslating = false;
+      // Revert flag to previous
+      updateActiveFlag(currentLang);
+      alert(LANGS[currentLang].langName === 'English'
+        ? 'Translation failed. Please try again.'
+        : 'Translation failed / Übersetzung fehlgeschlagen / Traduction échouée.');
+      return;
+    }
+  }
+
+  // Commit: update currentLang, swap visible text
+  currentLang = lang;
+  displayMessages.forEach(msg => {
+    const row = document.getElementById(msg.id);
+    if (row) {
+      const bubble = row.querySelector('.msg-bubble');
+      if (bubble) bubble.textContent = msg.translations[lang] || msg.originalContent;
+    }
+  });
+
+  updateWelcomeAndChrome(lang);
+  document.body.classList.remove('translating');
+  isTranslating = false;
+}
+
+function updateActiveFlag(lang) {
+  document.querySelectorAll('.lang-flag').forEach(f => f.classList.remove('active'));
+  const flagEl = document.querySelector('[onclick="setLang(\'' + lang + '\')"]');
+  if (flagEl) flagEl.classList.add('active');
+}
+
+function updateWelcomeAndChrome(lang) {
+  const l = LANGS[lang];
+  // Update welcome screen if still visible
   const welcome = document.getElementById('welcome');
   if (welcome) {
     document.getElementById('welcomeTitle').textContent = l.title;
@@ -421,8 +549,6 @@ function setLang(lang) {
     otherBtn.onclick = function() { document.getElementById('userInput').focus(); };
     sugDiv.appendChild(otherBtn);
   }
-
-  // Update input and footer
   document.getElementById('userInput').placeholder = l.placeholder;
   document.getElementById('footerNote').textContent = l.footer;
 }
@@ -440,21 +566,32 @@ function handleKey(e) {
 function updateSendBtn() {
   const btn = document.getElementById('sendBtn');
   const input = document.getElementById('userInput');
-  btn.classList.toggle('active', input.value.trim() && !isLoading);
+  btn.classList.toggle('active', input.value.trim() && !isLoading && !isTranslating);
 }
 
 function addMessage(role, content) {
   const welcome = document.getElementById('welcome');
   if (welcome) welcome.remove();
+  const id = 'msg_' + (++messageCounter);
   const area = document.getElementById('chatArea');
   const row = document.createElement('div');
   row.className = 'msg-row ' + role;
+  row.id = id;
   let html = '';
   if (role === 'assistant') html += '<div class="msg-avatar">dot</div>';
   html += '<div class="msg-bubble ' + role + '">' + escapeHtml(content) + '</div>';
   row.innerHTML = html;
   area.appendChild(row);
   area.scrollTop = area.scrollHeight;
+
+  // Store with metadata and seed the cache in current language
+  displayMessages.push({
+    id,
+    role,
+    originalContent: content,
+    originalLang: currentLang,
+    translations: { [currentLang]: content }
+  });
 }
 
 function showTyping() {
@@ -479,36 +616,37 @@ function escapeHtml(s) {
 async function sendMessage() {
   const input = document.getElementById('userInput');
   const text = input.value.trim();
-  if (!text || isLoading) return;
+  if (!text || isLoading || isTranslating) return;
   input.value = '';
   updateSendBtn();
   isLoading = true;
   addMessage('user', text);
 
-  // Prepend language hint for non-English
+  // Build API payload from current-language versions of all messages
   const l = LANGS[currentLang];
-  const messageContent = l.prefix + text;
-  conversationHistory.push({ role: 'user', content: messageContent });
+  const apiMessages = displayMessages.map((msg, i) => {
+    const content = msg.translations[currentLang] || msg.originalContent;
+    // Only prepend language prefix to the latest user message
+    if (i === displayMessages.length - 1 && msg.role === 'user' && l.prefix) {
+      return { role: msg.role, content: l.prefix + content };
+    }
+    return { role: msg.role, content };
+  });
 
   showTyping();
   try {
     const res = await fetch(API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: conversationHistory })
+      body: JSON.stringify({ messages: apiMessages })
     });
     const data = await res.json();
-    const reply = data.content?.[0]?.text || (currentLang === 'en'
-      ? 'Sorry, I could not get a response. Please try again or call us on +44 (0) 1428 685 861.'
-      : 'Sorry / Entschuldigung / Désolé. +44 (0) 1428 685 861.');
+    const reply = data.content?.[0]?.text || 'Sorry. Please call us on +44 (0) 1428 685 861.';
     removeTyping();
     addMessage('assistant', reply);
-    conversationHistory.push({ role: 'assistant', content: reply });
   } catch (err) {
     removeTyping();
-    addMessage('assistant', currentLang === 'en'
-      ? 'Sorry, something went wrong. Please try again or contact us on +44 (0) 1428 685 861.'
-      : 'Sorry / Entschuldigung / Désolé. +44 (0) 1428 685 861.');
+    addMessage('assistant', 'Sorry, something went wrong. Please call us on +44 (0) 1428 685 861.');
   }
   isLoading = false;
   updateSendBtn();
