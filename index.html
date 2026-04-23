@@ -56,18 +56,6 @@
   }
   .lang-flag:hover { background: rgba(255,255,255,0.1); }
   .lang-flag.active { border-color: #2d8cf0; background: rgba(45,140,240,0.2); }
-  .header-status {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 10px;
-    background: rgba(45,140,240,0.15);
-    border-radius: 4px;
-    font-size: 10px;
-    color: #5ba8f5;
-    font-family: 'SF Mono', Menlo, monospace;
-  }
-  .status-dot { width: 5px; height: 5px; border-radius: 50%; background: #5ba8f5; }
   .chat-area {
     flex: 1;
     overflow-y: auto;
@@ -266,7 +254,6 @@
       <span class="lang-flag" onclick="setLang('da')" title="Dansk">🇩🇰</span>
       <span class="lang-flag" onclick="setLang('sv')" title="Svenska">🇸🇪</span>
     </div>
-    <div class="header-status"><span class="status-dot"></span>Online</div>
   </div>
 </div>
 <div class="translating-banner" id="translatingBanner">Translating<span id="translatingDots">...</span></div>
