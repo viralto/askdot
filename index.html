@@ -34,8 +34,30 @@
   }
   .header-title { color: white; font-weight: 700; font-size: 16px; }
   .header-sub { color: rgba(255,255,255,0.5); font-size: 11px; font-family: 'SF Mono', Menlo, monospace; }
-  .header-status {
+  .header-right {
     margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .lang-flags {
+    display: flex;
+    gap: 2px;
+    align-items: center;
+  }
+  .lang-flag {
+    font-size: 18px;
+    cursor: pointer;
+    padding: 3px 4px;
+    border-radius: 4px;
+    border: 2px solid transparent;
+    transition: all 0.15s;
+    opacity: 0.6;
+    line-height: 1;
+  }
+  .lang-flag:hover { opacity: 1; background: rgba(255,255,255,0.1); }
+  .lang-flag.active { opacity: 1; border-color: #2d8cf0; background: rgba(45,140,240,0.2); }
+  .header-status {
     display: flex;
     align-items: center;
     gap: 6px;
@@ -200,6 +222,7 @@
   @media (max-width: 480px) {
     .msg-bubble { max-width: 90%; }
     .suggestion-btn { font-size: 12px; padding: 6px 10px; }
+    .lang-flag { font-size: 15px; padding: 2px 3px; }
   }
 </style>
 </head>
@@ -210,14 +233,26 @@
     <div class="header-title">Ask Dot</div>
     <div class="header-sub">EasyTac Support</div>
   </div>
-  <div class="header-status"><span class="status-dot"></span>Online</div>
+  <div class="header-right">
+    <div class="lang-flags">
+      <span class="lang-flag active" onclick="setLang('en')" title="English">🇬🇧</span>
+      <span class="lang-flag" onclick="setLang('de')" title="Deutsch">🇩🇪</span>
+      <span class="lang-flag" onclick="setLang('fr')" title="Français">🇫🇷</span>
+      <span class="lang-flag" onclick="setLang('es')" title="Español">🇪🇸</span>
+      <span class="lang-flag" onclick="setLang('it')" title="Italiano">🇮🇹</span>
+      <span class="lang-flag" onclick="setLang('nl')" title="Nederlands">🇳🇱</span>
+      <span class="lang-flag" onclick="setLang('da')" title="Dansk">🇩🇰</span>
+      <span class="lang-flag" onclick="setLang('sv')" title="Svenska">🇸🇪</span>
+    </div>
+    <div class="header-status"><span class="status-dot"></span>Online</div>
+  </div>
 </div>
 <div class="chat-area" id="chatArea">
   <div class="welcome" id="welcome">
     <div class="welcome-logo">dot</div>
-    <h2>Hi! I'm Dot.</h2>
-    <p>I'm here to help with anything EasyTac. Whether you're setting up for the first time, moving to a new computer, or just have a question, I'll walk you through it step by step.</p>
-    <div class="suggestions">
+    <h2 id="welcomeTitle">Hi! I'm Dot.</h2>
+    <p id="welcomeText">I'm here to help with anything EasyTac. Whether you're setting up for the first time, moving to a new computer, or just have a question, I'll walk you through it step by step.</p>
+    <div class="suggestions" id="suggestions">
       <button class="suggestion-btn" onclick="useSuggestion(this)">I've got a new computer and need to move EasyTac</button>
       <button class="suggestion-btn" onclick="useSuggestion(this)">I can't find my activation card</button>
       <button class="suggestion-btn" onclick="useSuggestion(this)">I'm not sure which kit I need</button>
@@ -233,14 +268,165 @@
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 13L13 8L3 3V7L9 8L3 9V13Z" fill="white"/></svg>
     </button>
   </div>
-  <div class="footer-note">Powered by Dot Origin. If Dot gets something wrong, call us on +44 (0) 1428 685 861.</div>
+  <div class="footer-note" id="footerNote">Powered by Dot Origin. If Dot gets something wrong, call us on +44 (0) 1428 685 861.</div>
 </div>
 <script>
-// API endpoint - change this to your Worker URL
 const API_URL = 'https://askdot.viralto.workers.dev/api/chat';
 
+const LANGS = {
+  en: {
+    title: "Hi! I'm Dot.",
+    text: "I'm here to help with anything EasyTac. Whether you're setting up for the first time, moving to a new computer, or just have a question, I'll walk you through it step by step.",
+    suggestions: [
+      "I've got a new computer and need to move EasyTac",
+      "I can't find my activation card",
+      "I'm not sure which kit I need",
+      "EasyTac keeps asking me to activate"
+    ],
+    other: "Something else? Just type below...",
+    placeholder: "Ask about EasyTac...",
+    footer: "Powered by Dot Origin. If Dot gets something wrong, call us on +44 (0) 1428 685 861.",
+    prefix: ""
+  },
+  de: {
+    title: "Hallo! Ich bin Dot.",
+    text: "Ich helfe Ihnen gerne bei allem rund um EasyTac. Ob Ersteinrichtung, Umzug auf einen neuen Computer oder eine einfache Frage, ich begleite Sie Schritt für Schritt.",
+    suggestions: [
+      "Ich habe einen neuen Computer und muss EasyTac umziehen",
+      "Ich finde meine Aktivierungskarte nicht",
+      "Ich bin nicht sicher, welches Set ich brauche",
+      "EasyTac fordert mich ständig zur Aktivierung auf"
+    ],
+    other: "Etwas anderes? Einfach unten eintippen...",
+    placeholder: "Fragen zu EasyTac...",
+    footer: "Bereitgestellt von Dot Origin. Falls Dot einen Fehler macht, rufen Sie uns an: +44 (0) 1428 685 861.",
+    prefix: "[The user has selected German. Please respond in German.]\n\n"
+  },
+  fr: {
+    title: "Bonjour ! Je suis Dot.",
+    text: "Je suis là pour vous aider avec EasyTac. Que ce soit pour une première installation, un changement d'ordinateur ou une simple question, je vous guide étape par étape.",
+    suggestions: [
+      "J'ai un nouvel ordinateur et je dois transférer EasyTac",
+      "Je ne trouve plus ma carte d'activation",
+      "Je ne suis pas sûr du kit qu'il me faut",
+      "EasyTac me demande sans cesse de m'activer"
+    ],
+    other: "Autre chose ? Tapez ci-dessous...",
+    placeholder: "Posez votre question sur EasyTac...",
+    footer: "Propulsé par Dot Origin. Si Dot se trompe, appelez-nous au +44 (0) 1428 685 861.",
+    prefix: "[The user has selected French. Please respond in French.]\n\n"
+  },
+  es: {
+    title: "¡Hola! Soy Dot.",
+    text: "Estoy aquí para ayudarte con EasyTac. Ya sea la primera instalación, un cambio de ordenador o una simple pregunta, te guiaré paso a paso.",
+    suggestions: [
+      "Tengo un ordenador nuevo y necesito mover EasyTac",
+      "No encuentro mi tarjeta de activación",
+      "No estoy seguro de qué kit necesito",
+      "EasyTac me pide activar constantemente"
+    ],
+    other: "¿Algo más? Escribe abajo...",
+    placeholder: "Pregunta sobre EasyTac...",
+    footer: "Desarrollado por Dot Origin. Si Dot comete un error, llámenos al +44 (0) 1428 685 861.",
+    prefix: "[The user has selected Spanish. Please respond in Spanish.]\n\n"
+  },
+  it: {
+    title: "Ciao! Sono Dot.",
+    text: "Sono qui per aiutarti con EasyTac. Che si tratti della prima installazione, di un cambio di computer o di una semplice domanda, ti guiderò passo dopo passo.",
+    suggestions: [
+      "Ho un nuovo computer e devo spostare EasyTac",
+      "Non trovo la mia scheda di attivazione",
+      "Non sono sicuro di quale kit mi serve",
+      "EasyTac continua a chiedermi di attivare"
+    ],
+    other: "Qualcos'altro? Scrivi qui sotto...",
+    placeholder: "Chiedi informazioni su EasyTac...",
+    footer: "Realizzato da Dot Origin. Se Dot sbaglia, chiamateci al +44 (0) 1428 685 861.",
+    prefix: "[The user has selected Italian. Please respond in Italian.]\n\n"
+  },
+  nl: {
+    title: "Hallo! Ik ben Dot.",
+    text: "Ik help je graag met alles rondom EasyTac. Of het nu je eerste installatie is, een overstap naar een nieuwe computer of gewoon een vraag, ik begeleid je stap voor stap.",
+    suggestions: [
+      "Ik heb een nieuwe computer en moet EasyTac verplaatsen",
+      "Ik kan mijn activeringskaart niet vinden",
+      "Ik weet niet zeker welke kit ik nodig heb",
+      "EasyTac blijft vragen om te activeren"
+    ],
+    other: "Iets anders? Typ hieronder...",
+    placeholder: "Vraag over EasyTac...",
+    footer: "Mogelijk gemaakt door Dot Origin. Als Dot een fout maakt, bel ons op +44 (0) 1428 685 861.",
+    prefix: "[The user has selected Dutch. Please respond in Dutch.]\n\n"
+  },
+  da: {
+    title: "Hej! Jeg er Dot.",
+    text: "Jeg er her for at hjælpe dig med alt om EasyTac. Uanset om det er din første opsætning, en ny computer eller bare et spørgsmål, guider jeg dig trin for trin.",
+    suggestions: [
+      "Jeg har en ny computer og skal flytte EasyTac",
+      "Jeg kan ikke finde mit aktiveringskort",
+      "Jeg er usikker på, hvilket sæt jeg har brug for",
+      "EasyTac bliver ved med at bede mig om at aktivere"
+    ],
+    other: "Noget andet? Skriv nedenfor...",
+    placeholder: "Spørg om EasyTac...",
+    footer: "Drevet af Dot Origin. Hvis Dot laver en fejl, ring til os på +44 (0) 1428 685 861.",
+    prefix: "[The user has selected Danish. Please respond in Danish.]\n\n"
+  },
+  sv: {
+    title: "Hej! Jag är Dot.",
+    text: "Jag finns här för att hjälpa dig med allt om EasyTac. Oavsett om det är din första installation, en ny dator eller bara en fråga, guidar jag dig steg för steg.",
+    suggestions: [
+      "Jag har en ny dator och behöver flytta EasyTac",
+      "Jag hittar inte mitt aktiveringskort",
+      "Jag är osäker på vilket kit jag behöver",
+      "EasyTac ber mig hela tiden att aktivera"
+    ],
+    other: "Något annat? Skriv nedan...",
+    placeholder: "Fråga om EasyTac...",
+    footer: "Drivs av Dot Origin. Om Dot gör ett misstag, ring oss på +44 (0) 1428 685 861.",
+    prefix: "[The user has selected Swedish. Please respond in Swedish.]\n\n"
+  }
+};
+
+let currentLang = 'en';
 let conversationHistory = [];
 let isLoading = false;
+
+function setLang(lang) {
+  currentLang = lang;
+  const l = LANGS[lang];
+
+  // Update active flag
+  document.querySelectorAll('.lang-flag').forEach(f => f.classList.remove('active'));
+  document.querySelector('[onclick="setLang(\'' + lang + '\')"]').classList.add('active');
+
+  // Update welcome screen if visible
+  const welcome = document.getElementById('welcome');
+  if (welcome) {
+    document.getElementById('welcomeTitle').textContent = l.title;
+    document.getElementById('welcomeText').textContent = l.text;
+    const sugDiv = document.getElementById('suggestions');
+    sugDiv.innerHTML = '';
+    l.suggestions.forEach(s => {
+      const btn = document.createElement('button');
+      btn.className = 'suggestion-btn';
+      btn.textContent = s;
+      btn.onclick = function() { useSuggestion(this); };
+      sugDiv.appendChild(btn);
+    });
+    const otherBtn = document.createElement('button');
+    otherBtn.className = 'suggestion-btn';
+    otherBtn.style.borderStyle = 'dashed';
+    otherBtn.style.color = '#9ca3af';
+    otherBtn.textContent = l.other;
+    otherBtn.onclick = function() { document.getElementById('userInput').focus(); };
+    sugDiv.appendChild(otherBtn);
+  }
+
+  // Update input and footer
+  document.getElementById('userInput').placeholder = l.placeholder;
+  document.getElementById('footerNote').textContent = l.footer;
+}
 
 function useSuggestion(btn) {
   document.getElementById('userInput').value = btn.textContent;
@@ -299,7 +485,12 @@ async function sendMessage() {
   updateSendBtn();
   isLoading = true;
   addMessage('user', text);
-  conversationHistory.push({ role: 'user', content: text });
+
+  // Prepend language hint for non-English
+  const l = LANGS[currentLang];
+  const messageContent = l.prefix + text;
+  conversationHistory.push({ role: 'user', content: messageContent });
+
   showTyping();
   try {
     const res = await fetch(API_URL, {
@@ -308,13 +499,17 @@ async function sendMessage() {
       body: JSON.stringify({ messages: conversationHistory })
     });
     const data = await res.json();
-    const reply = data.content?.[0]?.text || 'Sorry, I could not get a response. Please try again or call us on +44 (0) 1428 685 861.';
+    const reply = data.content?.[0]?.text || (currentLang === 'en'
+      ? 'Sorry, I could not get a response. Please try again or call us on +44 (0) 1428 685 861.'
+      : 'Sorry / Entschuldigung / Désolé. +44 (0) 1428 685 861.');
     removeTyping();
     addMessage('assistant', reply);
     conversationHistory.push({ role: 'assistant', content: reply });
   } catch (err) {
     removeTyping();
-    addMessage('assistant', 'Sorry, something went wrong. Please try again or contact us on +44 (0) 1428 685 861.');
+    addMessage('assistant', currentLang === 'en'
+      ? 'Sorry, something went wrong. Please try again or contact us on +44 (0) 1428 685 861.'
+      : 'Sorry / Entschuldigung / Désolé. +44 (0) 1428 685 861.');
   }
   isLoading = false;
   updateSendBtn();
