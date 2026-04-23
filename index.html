@@ -571,7 +571,7 @@ function updateWelcomeAndChrome(lang) {
 function useSuggestion(btn) {
   document.getElementById('userInput').value = btn.textContent;
   updateSendBtn();
-  document.getElementById('userInput').focus();
+  sendMessage();
 }
 
 function handleKey(e) {
