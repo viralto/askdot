@@ -323,7 +323,7 @@
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 13L13 8L3 3V7L9 8L3 9V13Z" fill="white"/></svg>
     </button>
   </div>
-  <div class="footer-note" id="footerNote">Powered by Dot Origin. If Dot gets something wrong, email support@easytac.uk.</div>
+  <div class="footer-note" id="footerNote">Powered by Dot Origin. If Dot gets something wrong, email support@easytac.uk</div>
 </div>
 <script>
 const API_URL = 'https://askdot.viralto.workers.dev/api/chat';
@@ -340,7 +340,7 @@ const LANGS = {
     ],
     other: "Something else? Just type below...",
     placeholder: "Ask about EasyTac...",
-    footer: "Powered by Dot Origin. If Dot gets something wrong, email support@easytac.uk.",
+    footer: "Powered by Dot Origin. If Dot gets something wrong, email support@easytac.uk",
     confirmSwitch: "Switching language will start a fresh conversation. Continue?",
     translating: "Translating",
     langName: "English",
@@ -357,7 +357,7 @@ const LANGS = {
     ],
     other: "Etwas anderes? Einfach unten eintippen...",
     placeholder: "Fragen zu EasyTac...",
-    footer: "Bereitgestellt von Dot Origin. Falls Dot einen Fehler macht, schreiben Sie uns an support@easytac.uk.",
+    footer: "Bereitgestellt von Dot Origin. Falls Dot einen Fehler macht, schreiben Sie uns an support@easytac.uk",
     translating: "Übersetzen",
     langName: "German",
     prefix: "[The user has selected German. Please respond in German.]\n\n"
@@ -373,7 +373,7 @@ const LANGS = {
     ],
     other: "Autre chose ? Tapez ci-dessous...",
     placeholder: "Posez votre question sur EasyTac...",
-    footer: "Propulsé par Dot Origin. Si Dot se trompe, écrivez-nous à support@easytac.uk.",
+    footer: "Propulsé par Dot Origin. Si Dot se trompe, écrivez-nous à support@easytac.uk",
     translating: "Traduction",
     langName: "French",
     prefix: "[The user has selected French. Please respond in French.]\n\n"
@@ -389,7 +389,7 @@ const LANGS = {
     ],
     other: "¿Algo más? Escribe abajo...",
     placeholder: "Pregunta sobre EasyTac...",
-    footer: "Desarrollado por Dot Origin. Si Dot comete un error, escríbenos a support@easytac.uk.",
+    footer: "Desarrollado por Dot Origin. Si Dot comete un error, escríbenos a support@easytac.uk",
     translating: "Traduciendo",
     langName: "Spanish",
     prefix: "[The user has selected Spanish. Please respond in Spanish.]\n\n"
@@ -405,7 +405,7 @@ const LANGS = {
     ],
     other: "Qualcos'altro? Scrivi qui sotto...",
     placeholder: "Chiedi informazioni su EasyTac...",
-    footer: "Realizzato da Dot Origin. Se Dot sbaglia, scriveteci a support@easytac.uk.",
+    footer: "Realizzato da Dot Origin. Se Dot sbaglia, scriveteci a support@easytac.uk",
     translating: "Traduzione",
     langName: "Italian",
     prefix: "[The user has selected Italian. Please respond in Italian.]\n\n"
@@ -421,7 +421,7 @@ const LANGS = {
     ],
     other: "Iets anders? Typ hieronder...",
     placeholder: "Vraag over EasyTac...",
-    footer: "Mogelijk gemaakt door Dot Origin. Als Dot een fout maakt, stuur een mailtje naar support@easytac.uk.",
+    footer: "Mogelijk gemaakt door Dot Origin. Als Dot een fout maakt, stuur een mailtje naar support@easytac.uk",
     translating: "Vertalen",
     langName: "Dutch",
     prefix: "[The user has selected Dutch. Please respond in Dutch.]\n\n"
@@ -437,7 +437,7 @@ const LANGS = {
     ],
     other: "Noget andet? Skriv nedenfor...",
     placeholder: "Spørg om EasyTac...",
-    footer: "Drevet af Dot Origin. Hvis Dot laver en fejl, skriv til os på support@easytac.uk.",
+    footer: "Drevet af Dot Origin. Hvis Dot laver en fejl, skriv til os på support@easytac.uk",
     translating: "Oversætter",
     langName: "Danish",
     prefix: "[The user has selected Danish. Please respond in Danish.]\n\n"
@@ -453,7 +453,7 @@ const LANGS = {
     ],
     other: "Något annat? Skriv nedan...",
     placeholder: "Fråga om EasyTac...",
-    footer: "Drivs av Dot Origin. Om Dot gör ett misstag, mejla oss på support@easytac.uk.",
+    footer: "Drivs av Dot Origin. Om Dot gör ett misstag, mejla oss på support@easytac.uk",
     translating: "Översätter",
     langName: "Swedish",
     prefix: "[The user has selected Swedish. Please respond in Swedish.]\n\n"
@@ -673,12 +673,12 @@ async function sendMessage() {
       body: JSON.stringify({ messages: apiMessages })
     });
     const data = await res.json();
-    const reply = data.content?.[0]?.text || 'Sorry. Please email support@easytac.uk.';
+    const reply = data.content?.[0]?.text || 'Sorry. Please email support@easytac.uk';
     removeTyping();
     addMessage('assistant', reply);
   } catch (err) {
     removeTyping();
-    addMessage('assistant', 'Sorry, something went wrong. Please email support@easytac.uk.');
+    addMessage('assistant', 'Sorry, something went wrong. Please email support@easytac.uk');
   }
   isLoading = false;
   updateSendBtn();
