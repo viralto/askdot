@@ -198,28 +198,27 @@
   .send-btn.active { background: #2d8cf0; cursor: pointer; }
 
   .alpha-stamp {
-    position: fixed;
-    top: 180px;
-    left: 50%;
-    z-index: 100;
-    pointer-events: none;
-    transform: translateX(-50%) rotate(-14deg);
-    padding: 14px 32px;
+    display: inline-block;
+    margin-left: 10px;
+    padding: 3px 8px;
     font-family: 'Arial Black', 'Helvetica Neue', sans-serif;
     font-weight: 900;
-    font-size: 44px;
-    letter-spacing: 5px;
-    color: #c2392a;
-    opacity: 0.3;
-    border: 6px solid #c2392a;
-    border-radius: 8px;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    color: #ff6b5a;
+    opacity: 0.85;
+    border: 2px solid #ff6b5a;
+    border-radius: 4px;
     background: transparent;
     text-transform: uppercase;
     white-space: nowrap;
-    filter: blur(0.4px);
+    transform: rotate(-8deg);
+    filter: blur(0.2px);
+    pointer-events: none;
+    align-self: center;
   }
   @media (max-width: 600px) {
-    .alpha-stamp { top: 155px; font-size: 26px; padding: 8px 20px; border-width: 4px; letter-spacing: 3px; }
+    .alpha-stamp { font-size: 8px; padding: 2px 5px; letter-spacing: 1px; border-width: 1px; margin-left: 6px; }
   }
 
   .footer-note {
@@ -264,13 +263,13 @@
 </style>
 </head>
 <body>
-<div class="alpha-stamp">Alpha Testing</div>
 <div class="header">
   <div class="header-logo">dot</div>
   <div>
     <div class="header-title">Ask Dot</div>
     <div class="header-sub">EasyTac Support</div>
   </div>
+  <div class="alpha-stamp">Alpha</div>
   <div class="header-right">
     <div class="lang-flags">
       <span class="lang-flag active" onclick="setLang('en')" title="English">🇬🇧</span>
