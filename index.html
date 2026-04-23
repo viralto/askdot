@@ -50,12 +50,28 @@
   .lang-flag {
     font-size: 18px;
     cursor: pointer;
-    padding: 3px 4px;
+    padding: 3px 4px 7px 4px;
     border-radius: 4px;
     border: 2px solid transparent;
     transition: all 0.15s;
     line-height: 1;
+    position: relative;
   }
+  .lang-flag::after {
+    content: attr(data-code);
+    position: absolute;
+    bottom: 0px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 8px;
+    font-weight: 700;
+    font-family: 'SF Mono', Menlo, monospace;
+    color: rgba(255,255,255,0.7);
+    letter-spacing: 0.5px;
+    line-height: 1;
+    pointer-events: none;
+  }
+  .lang-flag.active::after { color: #ffffff; }
   .lang-flag:hover { background: rgba(255,255,255,0.1); }
   .lang-flag.active { border-color: #2d8cf0; background: rgba(45,140,240,0.2); }
   .chat-area {
@@ -259,7 +275,8 @@
   @media (max-width: 480px) {
     .msg-bubble { max-width: 90%; }
     .suggestion-btn { font-size: 12px; padding: 6px 10px; }
-    .lang-flag { font-size: 15px; padding: 2px 3px; }
+    .lang-flag { font-size: 15px; padding: 2px 3px 6px 3px; }
+    .lang-flag::after { font-size: 7px; letter-spacing: 0.3px; }
   }
 </style>
 </head>
@@ -273,14 +290,14 @@
   <div class="alpha-stamp">Alpha</div>
   <div class="header-right">
     <div class="lang-flags">
-      <span class="lang-flag active" onclick="setLang('en')" title="English">🇬🇧</span>
-      <span class="lang-flag" onclick="setLang('de')" title="Deutsch">🇩🇪</span>
-      <span class="lang-flag" onclick="setLang('fr')" title="Français">🇫🇷</span>
-      <span class="lang-flag" onclick="setLang('es')" title="Español">🇪🇸</span>
-      <span class="lang-flag" onclick="setLang('it')" title="Italiano">🇮🇹</span>
-      <span class="lang-flag" onclick="setLang('nl')" title="Nederlands">🇳🇱</span>
-      <span class="lang-flag" onclick="setLang('da')" title="Dansk">🇩🇰</span>
-      <span class="lang-flag" onclick="setLang('sv')" title="Svenska">🇸🇪</span>
+      <span class="lang-flag active" onclick="setLang('en')" title="English" data-code="EN">🇬🇧</span>
+      <span class="lang-flag" onclick="setLang('de')" title="Deutsch" data-code="DE">🇩🇪</span>
+      <span class="lang-flag" onclick="setLang('fr')" title="Français" data-code="FR">🇫🇷</span>
+      <span class="lang-flag" onclick="setLang('es')" title="Español" data-code="ES">🇪🇸</span>
+      <span class="lang-flag" onclick="setLang('it')" title="Italiano" data-code="IT">🇮🇹</span>
+      <span class="lang-flag" onclick="setLang('nl')" title="Nederlands" data-code="NL">🇳🇱</span>
+      <span class="lang-flag" onclick="setLang('da')" title="Dansk" data-code="DA">🇩🇰</span>
+      <span class="lang-flag" onclick="setLang('sv')" title="Svenska" data-code="SV">🇸🇪</span>
     </div>
   </div>
 </div>
