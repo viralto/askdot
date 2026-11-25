@@ -1,0 +1,10 @@
+{
+  "main_module": "index.mjs",
+  "compatibility_date": "2026-04-15",
+  "bindings": [
+    {"type":"inherit","name":"ANTHROPIC_API_KEY"},
+    {"type":"plain_text","name":"CHAT_MODEL","text":"claude-sonnet-5-5"},
+    {"type":"plain_text","name":"TRANSLATION_MODEL","text":"claude-haiku-5-5"},
+    {"type":"ratelimit","name":"LIMITER","namespace_id":"74210865","simple":{"limit":20,"period":60}}
+  ]
+}

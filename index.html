@@ -278,6 +278,17 @@
     .lang-flag { font-size: 15px; padding: 2px 3px 6px 3px; }
     .lang-flag::after { font-size: 7px; letter-spacing: 0.3px; }
   }
+.lang-flag { background:transparent; font-family:inherit }
+  .lang-flags { flex-wrap:wrap; justify-content:flex-end }
+  [hidden] { display:none !important }
+  .actions { display:flex; gap:8px; flex-wrap:wrap; margin:6px 0 }
+  .actions button { background:white; border:1px solid #ccd3dc; border-radius:6px; padding:6px 10px; color:#263749; cursor:pointer; font:inherit; font-size:13px }
+  .actions.quiet button { border:0; text-decoration:underline; background:transparent }
+  button:focus-visible, a:focus-visible { outline:3px solid #195faa; outline-offset:2px }
+  #notice { font-size:14px; color:#633900 }
+  #summary { width:100%; font:inherit; padding:6px }
+  .msg-bubble a { color:inherit; overflow-wrap:anywhere }
+  @media(max-width:480px){.header{gap:6px;padding:8px}.lang-flags{max-width:154px}.welcome{padding:20px 4px}}
 </style>
 </head>
 <body>
@@ -290,19 +301,19 @@
   <div class="alpha-stamp">Alpha</div>
   <div class="header-right">
     <div class="lang-flags">
-      <span class="lang-flag active" onclick="setLang('en')" title="English" data-code="EN">🇬🇧</span>
-      <span class="lang-flag" onclick="setLang('de')" title="Deutsch" data-code="DE">🇩🇪</span>
-      <span class="lang-flag" onclick="setLang('fr')" title="Français" data-code="FR">🇫🇷</span>
-      <span class="lang-flag" onclick="setLang('es')" title="Español" data-code="ES">🇪🇸</span>
-      <span class="lang-flag" onclick="setLang('it')" title="Italiano" data-code="IT">🇮🇹</span>
-      <span class="lang-flag" onclick="setLang('nl')" title="Nederlands" data-code="NL">🇳🇱</span>
-      <span class="lang-flag" onclick="setLang('da')" title="Dansk" data-code="DA">🇩🇰</span>
-      <span class="lang-flag" onclick="setLang('sv')" title="Svenska" data-code="SV">🇸🇪</span>
+      <button type="button" class="lang-flag active" onclick="setLang('en')" lang="en" aria-label="English" title="English" data-code="EN">🇬🇧</button>
+      <button type="button" class="lang-flag" onclick="setLang('de')" lang="de" aria-label="Deutsch" title="Deutsch" data-code="DE">🇩🇪</button>
+      <button type="button" class="lang-flag" onclick="setLang('fr')" lang="fr" aria-label="Français" title="Français" data-code="FR">🇫🇷</button>
+      <button type="button" class="lang-flag" onclick="setLang('es')" lang="es" aria-label="Español" title="Español" data-code="ES">🇪🇸</button>
+      <button type="button" class="lang-flag" onclick="setLang('it')" lang="it" aria-label="Italiano" title="Italiano" data-code="IT">🇮🇹</button>
+      <button type="button" class="lang-flag" onclick="setLang('nl')" lang="nl" aria-label="Nederlands" title="Nederlands" data-code="NL">🇳🇱</button>
+      <button type="button" class="lang-flag" onclick="setLang('da')" lang="da" aria-label="Dansk" title="Dansk" data-code="DA">🇩🇰</button>
+      <button type="button" class="lang-flag" onclick="setLang('sv')" lang="sv" aria-label="Svenska" title="Svenska" data-code="SV">🇸🇪</button>
     </div>
   </div>
 </div>
 <div class="translating-banner" id="translatingBanner">Translating<span id="translatingDots">...</span></div>
-<div class="chat-area" id="chatArea">
+<div class="chat-area" id="chatArea" role="log" aria-live="polite">
   <div class="welcome" id="welcome">
     <div class="welcome-logo">dot</div>
     <h2 id="welcomeTitle">Hi! I'm Dot.</h2>
@@ -317,16 +328,22 @@
   </div>
 </div>
 <div class="input-area">
+  <div id="notice" role="status" aria-live="polite"></div>
+  <div id="recovery" class="actions" hidden><button id="retry" type="button"></button><button id="edit" type="button"></button></div>
+  <div id="guide" class="actions" hidden><button id="done" type="button"></button><button id="different" type="button"></button></div>
   <div class="input-wrap">
-    <textarea id="userInput" placeholder="Ask about EasyTac..." rows="1" onkeydown="handleKey(event)" oninput="updateSendBtn()"></textarea>
-    <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+    <textarea id="userInput" maxlength="3000" aria-label="Ask about EasyTac" placeholder="Ask about EasyTac..." rows="1" onkeydown="handleKey(event)" oninput="updateSendBtn()"></textarea>
+    <button class="send-btn" id="sendBtn" aria-label="Send" onclick="sendMessage()">
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 13L13 8L3 3V7L9 8L3 9V13Z" fill="white"/></svg>
     </button>
   </div>
+  <div id="tools" class="actions quiet" hidden><button id="handoff" type="button"></button><button id="reset" type="button"></button></div>
+  <div id="supportBox" hidden><textarea id="summary" readonly rows="5"></textarea><div class="actions"><button id="copy" type="button"></button><a id="email" href="mailto:support@easytac.uk">support@easytac.uk</a></div></div>
   <div class="footer-note" id="footerNote">Powered by Dot Origin.</div>
 </div>
 <script>
-const API_URL = 'https://askdot.viralto.workers.dev/api/chat';
+const production = location.hostname === 'askdot.pages.dev';
+const API_URL = production ? 'https://askdot.viralto.workers.dev/api/chat' : 'https://0723bf98-askdot.viralto.workers.dev/api/chat';
 
 const LANGS = {
   en: {
@@ -341,10 +358,7 @@ const LANGS = {
     other: "Something else? Just type below...",
     placeholder: "Ask about EasyTac...",
     footer: "Powered by Dot Origin.",
-    confirmSwitch: "Switching language will start a fresh conversation. Continue?",
     translating: "Translating",
-    langName: "English",
-    prefix: ""
   },
   de: {
     title: "Hallo! Ich bin Dot.",
@@ -359,8 +373,6 @@ const LANGS = {
     placeholder: "Fragen zu EasyTac...",
     footer: "Bereitgestellt von Dot Origin.",
     translating: "Übersetzen",
-    langName: "German",
-    prefix: "[The user has selected German. Please respond in German.]\n\n"
   },
   fr: {
     title: "Bonjour ! Je suis Dot.",
@@ -375,8 +387,6 @@ const LANGS = {
     placeholder: "Posez votre question sur EasyTac...",
     footer: "Propulsé par Dot Origin.",
     translating: "Traduction",
-    langName: "French",
-    prefix: "[The user has selected French. Please respond in French.]\n\n"
   },
   es: {
     title: "¡Hola! Soy Dot.",
@@ -391,8 +401,6 @@ const LANGS = {
     placeholder: "Pregunta sobre EasyTac...",
     footer: "Desarrollado por Dot Origin.",
     translating: "Traduciendo",
-    langName: "Spanish",
-    prefix: "[The user has selected Spanish. Please respond in Spanish.]\n\n"
   },
   it: {
     title: "Ciao! Sono Dot.",
@@ -407,8 +415,6 @@ const LANGS = {
     placeholder: "Chiedi informazioni su EasyTac...",
     footer: "Realizzato da Dot Origin.",
     translating: "Traduzione",
-    langName: "Italian",
-    prefix: "[The user has selected Italian. Please respond in Italian.]\n\n"
   },
   nl: {
     title: "Hallo! Ik ben Dot.",
@@ -423,8 +429,6 @@ const LANGS = {
     placeholder: "Vraag over EasyTac...",
     footer: "Mogelijk gemaakt door Dot Origin.",
     translating: "Vertalen",
-    langName: "Dutch",
-    prefix: "[The user has selected Dutch. Please respond in Dutch.]\n\n"
   },
   da: {
     title: "Hej! Jeg er Dot.",
@@ -439,8 +443,6 @@ const LANGS = {
     placeholder: "Spørg om EasyTac...",
     footer: "Drevet af Dot Origin.",
     translating: "Oversætter",
-    langName: "Danish",
-    prefix: "[The user has selected Danish. Please respond in Danish.]\n\n"
   },
   sv: {
     title: "Hej! Jag är Dot.",
@@ -455,235 +457,10 @@ const LANGS = {
     placeholder: "Fråga om EasyTac...",
     footer: "Drivs av Dot Origin.",
     translating: "Översätter",
-    langName: "Swedish",
-    prefix: "[The user has selected Swedish. Please respond in Swedish.]\n\n"
   }
 };
 
-let currentLang = 'en';
-let displayMessages = []; // [{id, role, originalContent, originalLang, translations: {lang: text}}]
-let isLoading = false;
-let isTranslating = false;
-let messageCounter = 0;
-
-async function setLang(lang) {
-  if (lang === currentLang || isTranslating) return;
-  const l = LANGS[lang];
-
-  // If conversation hasn't started, just switch UI
-  if (displayMessages.length === 0) {
-    currentLang = lang;
-    updateActiveFlag(lang);
-    updateWelcomeAndChrome(lang);
-    return;
-  }
-
-  // Conversation in progress: translate existing messages
-  isTranslating = true;
-  document.body.classList.add('translating');
-  document.getElementById('translatingBanner').textContent = l.translating + '...';
-  // Pre-set active flag to give immediate feedback
-  updateActiveFlag(lang);
-
-  // Find messages that don't yet have a translation in target lang
-  const toTranslate = [];
-  const toTranslateIndexes = [];
-  displayMessages.forEach((msg, i) => {
-    if (!msg.translations[lang]) {
-      // Use any existing translation as source (prefer original language)
-      const sourceText = msg.translations[msg.originalLang] || msg.originalContent;
-      toTranslate.push({ role: msg.role, content: sourceText });
-      toTranslateIndexes.push(i);
-    }
-  });
-
-  if (toTranslate.length > 0) {
-    try {
-      const res = await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          mode: 'translate',
-          targetLanguage: l.langName,
-          messages: toTranslate
-        })
-      });
-      const data = await res.json();
-      let text = data.content?.[0]?.text || '[]';
-      // Strip potential markdown fences defensively
-      text = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '').trim();
-      const translated = JSON.parse(text);
-
-      if (!Array.isArray(translated) || translated.length !== toTranslate.length) {
-        throw new Error('Translation returned wrong shape');
-      }
-
-      // Cache translations on their messages
-      translated.forEach((t, i) => {
-        const msgIndex = toTranslateIndexes[i];
-        displayMessages[msgIndex].translations[lang] = t;
-      });
-    } catch (err) {
-      console.error('Translation failed:', err);
-      document.body.classList.remove('translating');
-      isTranslating = false;
-      // Revert flag to previous
-      updateActiveFlag(currentLang);
-      alert(LANGS[currentLang].langName === 'English'
-        ? 'Translation failed. Please try again.'
-        : 'Translation failed / Übersetzung fehlgeschlagen / Traduction échouée.');
-      return;
-    }
-  }
-
-  // Commit: update currentLang, swap visible text
-  currentLang = lang;
-  displayMessages.forEach(msg => {
-    const row = document.getElementById(msg.id);
-    if (row) {
-      const bubble = row.querySelector('.msg-bubble');
-      if (bubble) bubble.textContent = msg.translations[lang] || msg.originalContent;
-    }
-  });
-
-  updateWelcomeAndChrome(lang);
-  document.body.classList.remove('translating');
-  isTranslating = false;
-}
-
-function updateActiveFlag(lang) {
-  document.querySelectorAll('.lang-flag').forEach(f => f.classList.remove('active'));
-  const flagEl = document.querySelector('[onclick="setLang(\'' + lang + '\')"]');
-  if (flagEl) flagEl.classList.add('active');
-}
-
-function updateWelcomeAndChrome(lang) {
-  const l = LANGS[lang];
-  // Update welcome screen if still visible
-  const welcome = document.getElementById('welcome');
-  if (welcome) {
-    document.getElementById('welcomeTitle').textContent = l.title;
-    document.getElementById('welcomeText').textContent = l.text;
-    const sugDiv = document.getElementById('suggestions');
-    sugDiv.innerHTML = '';
-    l.suggestions.forEach(s => {
-      const btn = document.createElement('button');
-      btn.className = 'suggestion-btn';
-      btn.textContent = s;
-      btn.onclick = function() { useSuggestion(this); };
-      sugDiv.appendChild(btn);
-    });
-    const otherBtn = document.createElement('button');
-    otherBtn.className = 'suggestion-btn';
-    otherBtn.style.borderStyle = 'dashed';
-    otherBtn.style.color = '#9ca3af';
-    otherBtn.textContent = l.other;
-    otherBtn.onclick = function() { document.getElementById('userInput').focus(); };
-    sugDiv.appendChild(otherBtn);
-  }
-  document.getElementById('userInput').placeholder = l.placeholder;
-  document.getElementById('footerNote').textContent = l.footer;
-}
-
-function useSuggestion(btn) {
-  document.getElementById('userInput').value = btn.textContent;
-  updateSendBtn();
-  sendMessage();
-}
-
-function handleKey(e) {
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
-}
-
-function updateSendBtn() {
-  const btn = document.getElementById('sendBtn');
-  const input = document.getElementById('userInput');
-  btn.classList.toggle('active', input.value.trim() && !isLoading && !isTranslating);
-}
-
-function addMessage(role, content) {
-  const welcome = document.getElementById('welcome');
-  if (welcome) welcome.remove();
-  const id = 'msg_' + (++messageCounter);
-  const area = document.getElementById('chatArea');
-  const row = document.createElement('div');
-  row.className = 'msg-row ' + role;
-  row.id = id;
-  let html = '';
-  if (role === 'assistant') html += '<div class="msg-avatar">dot</div>';
-  html += '<div class="msg-bubble ' + role + '">' + escapeHtml(content) + '</div>';
-  row.innerHTML = html;
-  area.appendChild(row);
-  area.scrollTop = area.scrollHeight;
-
-  // Store with metadata and seed the cache in current language
-  displayMessages.push({
-    id,
-    role,
-    originalContent: content,
-    originalLang: currentLang,
-    translations: { [currentLang]: content }
-  });
-}
-
-function showTyping() {
-  const area = document.getElementById('chatArea');
-  const row = document.createElement('div');
-  row.className = 'msg-row assistant';
-  row.id = 'typingIndicator';
-  row.innerHTML = '<div class="msg-avatar">dot</div><div class="typing"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>';
-  area.appendChild(row);
-  area.scrollTop = area.scrollHeight;
-}
-
-function removeTyping() {
-  const el = document.getElementById('typingIndicator');
-  if (el) el.remove();
-}
-
-function escapeHtml(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-
-async function sendMessage() {
-  const input = document.getElementById('userInput');
-  const text = input.value.trim();
-  if (!text || isLoading || isTranslating) return;
-  input.value = '';
-  updateSendBtn();
-  isLoading = true;
-  addMessage('user', text);
-
-  // Build API payload from current-language versions of all messages
-  const l = LANGS[currentLang];
-  const apiMessages = displayMessages.map((msg, i) => {
-    const content = msg.translations[currentLang] || msg.originalContent;
-    // Only prepend language prefix to the latest user message
-    if (i === displayMessages.length - 1 && msg.role === 'user' && l.prefix) {
-      return { role: msg.role, content: l.prefix + content };
-    }
-    return { role: msg.role, content };
-  });
-
-  showTyping();
-  try {
-    const res = await fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: apiMessages })
-    });
-    const data = await res.json();
-    const reply = data.content?.[0]?.text || 'Sorry. Please email support@easytac.uk.';
-    removeTyping();
-    addMessage('assistant', reply);
-  } catch (err) {
-    removeTyping();
-    addMessage('assistant', 'Sorry, something went wrong. Please email support@easytac.uk.');
-  }
-  isLoading = false;
-  updateSendBtn();
-  input.focus();
-}
 </script>
+<script src="chat.js"></script>
 </body>
 </html>
