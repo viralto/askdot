@@ -1,5 +1,5 @@
 import { behaviour, productFacts, regulatoryFacts } from './knowledge.mjs';
-import { catalogue } from './catalogue.mjs';
+import { catalogue, priceInstructions, verifiedReply, componentQuote } from './catalogue.mjs';
 import { translationJob } from './translate.mjs';
 
 const languages = {en:'English',de:'German',fr:'French',es:'Spanish',it:'Italian',nl:'Dutch',da:'Danish',sv:'Swedish'};
@@ -88,11 +88,13 @@ export default {
       }
       const currency = lang && lang !== 'English' ? 'EUR' : 'GBP';
       const other = currency === 'GBP' ? 'EUR' : 'GBP';
-      const prices = await Promise.all([catalogue(currency,ctx), catalogue(other,ctx)]);
+      const entries = (await Promise.all([catalogue(currency,ctx), catalogue(other,ctx)])).flat();
+      const direct=componentQuote(messages.at(-1).content,entries,lang,currency);
+      if(direct) return response({content:[{type:'text',text:direct}],source:'shop'},200,headers);
       const instruction = lang ? 'Reply in ' + lang + '. ' : 'Reply in the language of the newest question. ';
-      const system = [behaviour,productFacts,regulatoryFacts,instruction+'Prefer '+currency+' unless the user requests otherwise.',...prices].join('\n\n');
+      const system = [behaviour,productFacts,regulatoryFacts,instruction+'Prefer '+currency+' unless the user requests otherwise.',priceInstructions(entries)].join('\n\n');
       const {text,model,usage} = await askClaude(env,env.CHAT_MODEL,system,messages,1200,'chat');
-      return response({content:[{type:'text',text}],model,usage},200,headers);
+      return response({content:[{type:'text',text:verifiedReply(text,entries,lang)}],model,usage},200,headers);
     } catch (err) {
       const status = err instanceof Fault ? err.status : 503;
       return response({error:err instanceof Fault ? err.message : 'unavailable'},status,status===429?{...headers,'Retry-After':'60'}:headers);

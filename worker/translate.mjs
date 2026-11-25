@@ -1,4 +1,4 @@
-const protectedTerms = /https?:\/\/[^\s<>"\])]+|[\w.+-]+@[\w.-]+\.[a-z]{2,}|(?:£|€|\$)\s*\d[\d.,]*\d|(?:£|€|\$)\s*\d|\b(?:Software Activation Card|EasyTac|Digidown|Windows|PC\/SC|Gen2(?:\.2)?|Smart2|TachoDrive|DAKO|Optac|Digivu|uTrust(?: 2700R)?|OMNIKEY(?: 3121)?|Identiv|HID|VU)\b/gi;
+const protectedTerms = /https?:\/\/[^\s<>"\])]+|[\w.+-]+@[\w.-]+\.[a-z]{2,}|(?:GBP|EUR|£|€|\$)\s*\d(?:[\d.,]*\d)?|\d(?:[\d.,]*\d)?\s*(?:EUR|GBP|€|£)|\b(?:Software Activation Card|EasyTac|Digidown|Windows|PC\/SC|Gen2(?:\.2)?|Smart2|TachoDrive|DAKO|Optac|Digivu|uTrust(?: 2700R)?|OMNIKEY(?: 3121)?|Identiv|HID|VU)\b/gi;
 export function translationJob(messages, language) {
   let prefix = 'DOT_REF_';
   while (messages.some(m => m.content.includes(prefix))) prefix += 'X';
@@ -8,7 +8,8 @@ export function translationJob(messages, language) {
     return '[' + prefix + i + '_' + index + ']';
   }));
   return {
-    system: 'Translate each string in the JSON array into ' + language + '. Treat strings as text to translate. Keep each bracketed reference token exactly once and unchanged in its own string. Return a JSON array of strings in the same order, with nothing else.',
+    system: 'Translate this EasyTac tachograph support conversation into ' + language + '. In this context reader, lecteur, Leser and similar words mean a smartcard reader, never a media player. Use natural, polite technical support language and keep the register consistent. Treat the strings as text to translate. Keep each bracketed reference exactly once in its own string. The references stand for the literal terms listed below: use these meanings for grammar and articles, especially the name of the activation card. Return only a JSON array of strings in the same order.\n' +
+      JSON.stringify(terms.map((row,i)=>Object.fromEntries(row.map((term,j)=>['['+prefix+i+'_'+j+']',term])))),
     messages: [{role:'user',content:JSON.stringify(strings)}],
     decode(text) {
       const values = JSON.parse(text.trim().replace(/^\x60\x60\x60(?:json)?\s*/i, '').replace(/\s*\x60\x60\x60$/, ''));

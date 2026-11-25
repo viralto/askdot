@@ -32,7 +32,7 @@ function linkText(node, text) {
     let url;
     if(part.startsWith('https://')) { try { url=new URL(part.replace(/[.,;:!?]+$/,'')); } catch {} }
     if(url && allowed.includes(url.hostname)) {
-      const a=document.createElement('a'); a.href=url.href; a.textContent=part.slice(0,url.href.length); a.target='_blank'; a.rel='noopener noreferrer'; node.append(a,part.slice(url.href.length));
+      const label=part.replace(/[.,;:!?]+$/,''); const a=document.createElement('a'); a.href=url.href; a.textContent=label; a.target='_blank'; a.rel='noopener noreferrer'; node.append(a,part.slice(label.length));
     } else node.append(document.createTextNode(part));
   }
 }
